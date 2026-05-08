@@ -1,138 +1,178 @@
 # Azure Local Single VM Terraform
 
-This repository contains Terraform for two related tasks:
+This repo has two jobs:
 
-1. Read-only inventory checks against Azure.
-2. Creation of a single Windows VM on Azure Local.
+1. Read-only Azure and Azure Local inventory lookups in [data.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/data.tf:1)
+2. Optional creation of one Azure Local Windows VM in [vm.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/vm.tf:1)
 
-The configuration uses:
-
-- `azurerm` for standard Azure resource group lookups.
-- `azapi` for Azure and Azure Local resource discovery and VM deployment.
+The providers are configured in [terraform.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/terraform.tf:1).
 
 ## Files
 
-- `data.tf`: Read-only discovery of resource groups, Azure VMs in a specified resource group, and Azure Local VM images.
-- `main.tf`: Creation of a Windows Azure Local VM, NIC, Arc machine, and thick-provisioned OS disk.
-- `variables.tf`: Input variable definitions.
-- `outputs.tf`: Data and resource outputs.
-- `terraform.tfvars.example`: Example input values.
-- `versions.tf`: Terraform and provider requirements.
+- [terraform.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/terraform.tf:1): Terraform and provider configuration
+- [data.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/data.tf:1): read-only inventory lookups and outputs
+- [vm.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/vm.tf:1): optional single-VM deployment resources and outputs
+- [data.auto.tfvars](/Users/stevetractenberg/fpl/single-azure-local-compute/data.auto.tfvars:1): auto-loaded inputs for inventory lookups
+- [vm.auto.tfvars](/Users/stevetractenberg/fpl/single-azure-local-compute/vm.auto.tfvars:1): auto-loaded VM input template
 
-## What `data.tf` retrieves
+## Auto-Loaded Variable Files
 
-`data.tf` performs the following lookups:
+Terraform auto-loads only these patterns:
 
-- All resource groups in the current subscription.
-- All Azure IaaS VMs in `azure_vm_resource_group_name`.
-- All Azure Local `galleryImages` in the selected image resource group.
-- All Azure Local `marketplaceGalleryImages` in the selected image resource group.
+- `terraform.tfvars`
+- `terraform.tfvars.json`
+- `*.auto.tfvars`
+- `*.auto.tfvars.json`
 
-This is useful for validating that your Azure credentials have read access before attempting VM creation.
+## Authentication
 
-## Minimal inputs for read-only testing
-
-If you want to test credentials with read-only lookups only, the minimum required variables are:
-
-```hcl
-azure_local_resource_group_name = "rg-azure-local"
-azure_vm_resource_group_name    = "rg-azure-vms"
-```
-
-Optional:
-
-```hcl
-image_resource_group_name = "rg-azure-local-images"
-```
-
-If `image_resource_group_name` is omitted, it defaults to `azure_local_resource_group_name`.
-
-## Read-only workflow
-
-To run only the data lookups:
-
-1. Temporarily remove or rename `main.tf`.
-2. Remove, rename, or comment out the resource-based outputs in `outputs.tf`:
-   - `azure_local_vm_id`
-   - `azure_local_os_disk_id`
-   - `azure_local_nic_id`
-3. Keep `data.tf`, `variables.tf`, `versions.tf`, and the data-related outputs.
-4. Provide the required values in `terraform.tfvars`.
-5. Run:
+Authenticate with Azure before planning or applying:
 
 ```bash
+az login
+az account set --subscription <subscription-id>
 terraform init
+```
+
+If `subscription_id = null`, the VM code uses the currently selected Azure subscription from your active Azure auth context.
+
+## Inventory Mode
+
+The read-only lookups in [data.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/data.tf:1) are organized as four sections:
+
+1. All resource groups in the current subscription
+2. Azure Local custom locations in `azure_local_resource_group_name`
+3. Azure Local VMs in `azure_local_resource_group_name`
+4. Full details for one Azure Local VM
+
+Current default inputs for inventory are in [data.auto.tfvars](/Users/stevetractenberg/fpl/single-azure-local-compute/data.auto.tfvars:1):
+
+```hcl
+azure_local_resource_group_name = "hci-cluster-rg"
+azure_local_vm_name             = "example-azure-local-vm"
+```
+
+Run inventory:
+
+```bash
 terraform plan
 ```
 
-If the plan succeeds and the data sources resolve, your credentials have at least the read permissions needed for inventory.
+## VM Deployment Mode
 
-## VM creation workflow
+The single-VM deployment path lives in [vm.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/vm.tf:1).
 
-Once read-only access is confirmed, restore `main.tf` and the resource outputs, then populate the VM-specific variables.
-
-Important inputs for VM creation include:
-
-- `vm_name`: Used for the Azure Local VM name, Arc machine name, and Windows hostname.
-- `location`: Azure region for the control-plane resources.
-- `custom_location_id`: Azure Local custom location resource ID.
-- `logical_network_id`: Azure Local network the VM NIC will attach to.
-- `image_id`: Windows Azure Local image resource ID.
-- `os_disk_storage_container_id`: Storage container for the OS disk.
-- `admin_username`
-- `admin_password`
-- `processor_count`
-- `memory_mb`
-- `c_drive_size_gb`
-
-## Windows-specific behavior
-
-This configuration is Windows-only.
-
-- `windows_time_zone` should be a Windows time zone ID string.
-- For New York / Eastern time, use:
+VM creation is controlled by:
 
 ```hcl
-windows_time_zone = "Eastern Standard Time"
+create_vm = false
 ```
 
-## Storage and memory behavior
+in [vm.auto.tfvars](/Users/stevetractenberg/fpl/single-azure-local-compute/vm.auto.tfvars:5).
 
-- RAM is fixed using `memory_mb`.
-- The Windows OS disk is explicitly created as thick provisioned with `dynamic = false`.
-- The `C:` drive size is controlled by `c_drive_size_gb`.
+Set it to `true` when you actually want Terraform to create the VM.
 
-## Notes on Azure Local resources
-
-The VM deployment model uses:
-
-- `Microsoft.HybridCompute/machines` as the Arc machine resource.
-- `Microsoft.AzureStackHCI/virtualMachineInstances` as the actual Azure Local VM definition.
-- `Microsoft.AzureStackHCI/networkInterfaces` for the VM NIC.
-- `Microsoft.AzureStackHCI/virtualHardDisks` for the thick-provisioned OS disk.
-
-## Example commands
-
-Initialize providers:
+Plan or apply:
 
 ```bash
-terraform init
+terraform plan
+terraform apply
 ```
 
-Validate configuration:
+## VM Inputs
+
+The main deployment inputs are:
+
+- `azure_local_resource_group_name`: resource group that contains the Azure Local resources
+- `location`: Azure region for the control-plane resources
+- `vm_name`: name of the Azure Local VM and Arc machine
+- `custom_location_name`: Azure Local custom location name
+- `logical_network_name`: Azure Local logical network name
+- `image_name`: Azure Local VM image name
+- `image_resource_type`: usually `galleryImages` for images created from a local share
+- `admin_username`
+- `admin_password`
+- `cpu_count`
+- `memory_mb`
+- `static_ip_address`
+- `c_drive_size_gb`
+- `enable_d_drive`
+- `d_drive_size_gb`
+- `additional_tags`
+
+Example shape from [vm.auto.tfvars](/Users/stevetractenberg/fpl/single-azure-local-compute/vm.auto.tfvars:1):
+
+```hcl
+create_vm = true
+
+azure_local_resource_group_name = "hci-cluster-rg"
+location                        = "eastus"
+vm_name                         = "example-azure-local-vm"
+subscription_id                 = null
+custom_location_name            = "my-custom-location"
+logical_network_name            = "my-logical-network"
+image_name                      = "winServer2022-01"
+image_resource_type             = "galleryImages"
+storage_container_name          = null
+
+admin_username = "azurelocaladmin"
+admin_password = "ReplaceWithAStrongPassword123!"
+
+cpu_count         = 4
+memory_mb         = 16384
+static_ip_address = "192.168.1.25"
+c_drive_size_gb   = 127
+
+enable_d_drive  = false
+d_drive_size_gb = 256
+
+additional_tags = {
+  environment = "dev"
+  owner       = "engineering"
+}
+```
+
+## Azure Local-Specific Notes
+
+### `custom_location_name`
+
+This is the name of the Azure resource of type:
+
+```text
+Microsoft.ExtendedLocation/customLocations
+```
+
+It is the deployment target for Azure Local VM resources. If you do not know it, use section 2 of [data.tf](/Users/stevetractenberg/fpl/single-azure-local-compute/data.tf:29) to discover it.
+
+### `image_resource_type`
+
+If the image was created from a local share, use:
+
+```hcl
+image_resource_type = "galleryImages"
+```
+
+Marketplace-backed images use `marketplaceGalleryImages`.
+
+### `storage_container_name`
+
+You can usually leave this as `null`.
+
+The VM code will:
+
+- use the explicit value if you set `storage_container_name`
+- auto-select the container if exactly one storage container exists in scope
+- fail with a clear error listing valid names if multiple storage containers exist and no name was provided
+- fail if no storage containers are found
+
+This is lower-level than the Azure portal UI, where the equivalent behavior often appears as "storage path allocation method = choose automatically".
+
+## Validation
+
+Useful commands:
 
 ```bash
+terraform fmt
 terraform validate
-```
-
-Format files:
-
-```bash
-terraform fmt -recursive
-```
-
-Plan the deployment:
-
-```bash
 terraform plan
 ```

@@ -1,0 +1,2 @@
+azure_local_resource_group_name = "hci-cluster-rg"
+azure_local_vm_name             = "example-azure-local-vm"

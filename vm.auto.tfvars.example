@@ -1,0 +1,39 @@
+# Use with:
+# terraform plan -var-file=vm.tfvars
+#
+# The actual VM resources live in vm.tf.
+
+create_vm = false
+
+# Existing Azure Local inventory / scope
+azure_local_resource_group_name = "hci-cluster-rg"
+
+# VM deployment inputs
+location               = "eastus"
+vm_name                = "example-azure-local-vm"
+subscription_id        = null                 # optional: specify if different from the default subscription in your Azure provider configuration
+custom_location_name   = "my-custom-location" # will be retrieved from data.tf, but can be overridden here if desired
+logical_network_name   = "my-logical-network"
+image_name             = "winServer2022-01"
+image_resource_type    = "galleryImages" # or possibly marketplaceGalleryImages
+storage_container_name = null
+
+# Guest OS
+admin_username = "azurelocaladmin"
+admin_password = "ReplaceWithAStrongPassword123!"
+
+# Sizing
+cpu_count         = 4
+memory_mb         = 16384
+static_ip_address = "192.168.1.25"
+c_drive_size_gb   = 127
+
+# Optional D: drive
+enable_d_drive  = false
+d_drive_size_gb = 256
+
+# Optional tags
+additional_tags = {
+  environment = "dev"
+  owner       = "engineering"
+}

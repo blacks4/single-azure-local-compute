@@ -1,0 +1,8 @@
+# check the image type:
+
+  az stack-hci-vm image list --resource-group <rg> --subscription <sub>
+
+  Then look at the id or type field:
+
+  - if it contains /galleryImages/, use galleryImages
+  - if it contains /marketplaceGalleryImages/, use marketplaceGalleryImages
