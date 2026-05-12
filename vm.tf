@@ -237,7 +237,7 @@ data "azapi_resource_list" "azure_local_storage_containers" {
 
 resource "azapi_resource" "azure_local_os_disk" {
   count                     = local.vm_enabled ? 1 : 0
-  type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2025-09-01-preview"
+  type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01"
   name                      = "${var.vm_name}-osdisk"
   parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment[0].id
   location                  = var.location
@@ -262,20 +262,16 @@ resource "azapi_resource" "azure_local_os_disk" {
     }
     properties = {
       containerId      = local.storage_container_id
-      diskFileFormat   = "vhdx"
       diskSizeGB       = var.c_drive_size_gb
-      dynamic          = false
+      dynamic          = true
       hyperVGeneration = "V2"
-      imageReference = {
-        id = local.image_id
-      }
     }
   }
 }
 
 resource "azapi_resource" "azure_local_data_disk" {
   count                     = local.vm_enabled && var.enable_d_drive ? 1 : 0
-  type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2025-09-01-preview"
+  type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01"
   name                      = "${var.vm_name}-datadisk01"
   parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment[0].id
   location                  = var.location
@@ -300,9 +296,8 @@ resource "azapi_resource" "azure_local_data_disk" {
     }
     properties = {
       containerId      = local.storage_container_id
-      diskFileFormat   = "vhdx"
       diskSizeGB       = var.d_drive_size_gb
-      dynamic          = false
+      dynamic          = true
       hyperVGeneration = "V2"
     }
   }
