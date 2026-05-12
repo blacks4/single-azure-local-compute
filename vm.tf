@@ -204,6 +204,9 @@ locals {
 
   vm_storage_profile = local.vm_enabled ? merge(
     {
+      imageReference = {
+        id = local.image_id
+      }
       osDisk = {
         id     = azapi_resource.azure_local_os_disk[0].id
         osType = "Windows"
