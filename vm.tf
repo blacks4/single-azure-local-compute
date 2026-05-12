@@ -208,7 +208,6 @@ locals {
         id = local.image_id
       }
       osDisk = {
-        id     = azapi_resource.azure_local_os_disk[0].id
         osType = "Windows"
       }
       vmConfigStoragePathId = local.storage_container_id
@@ -238,39 +237,8 @@ data "azapi_resource_list" "azure_local_storage_containers" {
   }
 }
 
-resource "azapi_resource" "azure_local_os_disk" {
-  count                     = local.vm_enabled ? 1 : 0
-  type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01"
-  name                      = "${var.vm_name}-osdisk"
-  parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment[0].id
-  location                  = var.location
-  schema_validation_enabled = false
-  tags                      = local.vm_tags
-
-  lifecycle {
-    precondition {
-      condition     = length(local.missing_vm_inputs) == 0
-      error_message = local.vm_precondition_message
-    }
-    precondition {
-      condition     = local.requested_storage_container_name != null || length(local.discovered_storage_containers) == 1
-      error_message = local.storage_container_precondition_message
-    }
-  }
-
-  body = {
-    extendedLocation = {
-      type = "CustomLocation"
-      name = local.custom_location_id
-    }
-    properties = {
-      containerId      = local.storage_container_id
-      diskSizeGB       = var.c_drive_size_gb
-      dynamic          = true
-      hyperVGeneration = "V2"
-    }
-  }
-}
+# OS disk is created automatically by Azure from the imageReference in the VM storage profile
+# This matches the portal behavior where the disk is not a separate top-level resource
 
 resource "azapi_resource" "azure_local_data_disk" {
   count                     = local.vm_enabled && var.enable_d_drive ? 1 : 0
