@@ -208,7 +208,8 @@ locals {
         id = local.image_id
       }
       osDisk = {
-        osType = "Windows"
+        osType     = "Windows"
+        diskSizeGB = var.c_drive_size_gb
       }
       vmConfigStoragePathId = local.storage_container_id
     },
