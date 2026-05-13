@@ -1,142 +1,3 @@
-variable "create_vm" {
-  description = "Whether to create a single Azure Local Windows VM."
-  type        = bool
-  default     = false
-}
-
-variable "subscription_id" {
-  description = "Optional subscription ID override. Defaults to the active Azure CLI / provider context subscription."
-  type        = string
-  default     = null
-}
-
-variable "location" {
-  description = "Azure region for Azure Local control-plane resources."
-  type        = string
-  default     = null
-}
-
-variable "vm_name" {
-  description = "Name of the Azure Local VM and backing Arc machine."
-  type        = string
-  default     = null
-}
-
-variable "custom_location_name" {
-  description = "Name of the Azure Local custom location."
-  type        = string
-  default     = null
-}
-
-variable "custom_location_resource_group_name" {
-  description = "Optional resource group for the custom location. Defaults to azure_local_resource_group_name."
-  type        = string
-  default     = null
-}
-
-variable "logical_network_name" {
-  description = "Name of the Azure Local logical network."
-  type        = string
-  default     = null
-}
-
-variable "logical_network_resource_group_name" {
-  description = "Optional resource group for the logical network. Defaults to azure_local_resource_group_name."
-  type        = string
-  default     = null
-}
-
-variable "image_name" {
-  description = "Name of the Azure Local image."
-  type        = string
-  default     = null
-}
-
-variable "image_resource_group_name" {
-  description = "Optional resource group for the Azure Local image. Defaults to azure_local_resource_group_name."
-  type        = string
-  default     = null
-}
-
-variable "image_resource_type" {
-  description = "Image resource type under Microsoft.AzureStackHCI."
-  type        = string
-  default     = "marketplaceGalleryImages"
-}
-
-variable "storage_container_name" {
-  description = "Optional name of the Azure Local storage container for VM configuration and disks. If omitted and exactly one container exists in scope, Terraform selects it automatically."
-  type        = string
-  default     = null
-}
-
-variable "storage_container_resource_group_name" {
-  description = "Optional resource group for the storage container. Defaults to azure_local_resource_group_name."
-  type        = string
-  default     = null
-}
-
-variable "admin_username" {
-  description = "Windows administrator username."
-  type        = string
-  default     = null
-}
-
-variable "admin_password" {
-  description = "Windows administrator password."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
-variable "cpu_count" {
-  description = "Number of vCPUs for the VM."
-  type        = number
-  default     = 2
-}
-
-variable "memory_mb" {
-  description = "Fixed RAM allocation in MB."
-  type        = number
-  default     = 8192
-}
-
-variable "static_ip_address" {
-  description = "Optional static private IP address. Leave null for DHCP."
-  type        = string
-  default     = null
-}
-
-variable "c_drive_size_gb" {
-  description = "Windows C: drive size in GB."
-  type        = number
-  default     = 127
-}
-
-variable "enable_d_drive" {
-  description = "Whether to create and attach an additional data disk for a D: drive."
-  type        = bool
-  default     = false
-}
-
-variable "d_drive_size_gb" {
-  description = "Size of the optional D: drive in GB."
-  type        = number
-  default     = 128
-}
-
-variable "windows_time_zone" {
-  description = "Optional Windows time zone ID."
-  type        = string
-  default     = "Eastern Standard Time"
-}
-
-variable "additional_tags" {
-  description = "Additional tags to apply to all created Azure Local VM resources."
-  type        = map(string)
-  default     = {}
-}
-
 locals {
   vm_enabled = var.create_vm
 
@@ -208,8 +69,8 @@ locals {
         id = local.image_id
       }
       osDisk = {
-        osType     = "Windows"
-        diskSizeGB = var.c_drive_size_gb
+        osType = "Windows"
+        #diskSizeGB = var.c_drive_size_gb
       }
       vmConfigStoragePathId = local.storage_container_id
     },
@@ -221,11 +82,6 @@ locals {
       ]
     } : {}
   ) : null
-}
-
-data "azurerm_resource_group" "azure_local_vm_deployment" {
-  count = local.vm_enabled ? 1 : 0
-  name  = var.azure_local_resource_group_name
 }
 
 data "azapi_resource_list" "azure_local_storage_containers" {
@@ -245,7 +101,7 @@ resource "azapi_resource" "azure_local_data_disk" {
   count                     = local.vm_enabled && var.enable_d_drive ? 1 : 0
   type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01"
   name                      = "${var.vm_name}-datadisk01"
-  parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment[0].id
+  parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment.id
   location                  = var.location
   schema_validation_enabled = false
   tags                      = local.vm_tags
@@ -279,7 +135,7 @@ resource "azapi_resource" "arc_machine" {
   count     = local.vm_enabled ? 1 : 0
   type      = "Microsoft.HybridCompute/machines@2024-07-10"
   name      = var.vm_name
-  parent_id = data.azurerm_resource_group.azure_local_vm_deployment[0].id
+  parent_id = data.azurerm_resource_group.azure_local_vm_deployment.id
   location  = var.location
   tags      = local.vm_tags
 
@@ -307,7 +163,7 @@ resource "azapi_resource" "azure_local_nic" {
   count                     = local.vm_enabled ? 1 : 0
   type                      = "Microsoft.AzureStackHCI/networkInterfaces@2024-01-01"
   name                      = "nic-${var.vm_name}"
-  parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment[0].id
+  parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment.id
   location                  = var.location
   schema_validation_enabled = false
   tags                      = local.vm_tags
@@ -392,15 +248,10 @@ output "azure_local_vm_id" {
   value       = try(azapi_resource.azure_local_virtual_machine[0].id, null)
 }
 
-output "azure_local_vm_os_disk_id" {
-  description = "Resource ID of the created Azure Local OS disk."
-  value       = try(azapi_resource.azure_local_os_disk[0].id, null)
-}
-
-output "azure_local_vm_data_disk_id" {
-  description = "Resource ID of the optional Azure Local data disk."
-  value       = try(azapi_resource.azure_local_data_disk[0].id, null)
-}
+# output "azure_local_vm_data_disk_id" {
+#   description = "Resource ID of the optional Azure Local data disk."
+#   value       = try(azapi_resource.azure_local_data_disk[0].id, null)
+# }
 
 output "azure_local_vm_nic_id" {
   description = "Resource ID of the created Azure Local NIC."
