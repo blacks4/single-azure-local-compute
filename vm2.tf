@@ -92,7 +92,7 @@ resource "azapi_resource" "arc_machine_2" {
 
 resource "azapi_resource" "azure_local_nic_2" {
   type                      = "Microsoft.AzureStackHCI/networkInterfaces@2024-01-01"
-  name                      = "nic-${local.vm_name_2}"
+  name                      = "${local.vm_name_2}-nic"
   parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment.id
   location                  = var.location
   schema_validation_enabled = false
