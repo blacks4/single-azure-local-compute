@@ -162,7 +162,7 @@ resource "azapi_resource" "arc_machine" {
 resource "azapi_resource" "azure_local_nic" {
   count                     = local.vm_enabled ? 1 : 0
   type                      = "Microsoft.AzureStackHCI/networkInterfaces@2024-01-01"
-  name                      = "nic-${var.vm_name}"
+  name                      = "${var.vm_name}-nic"
   parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment.id
   location                  = var.location
   schema_validation_enabled = false
