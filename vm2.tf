@@ -21,16 +21,11 @@ locals {
   arc_https_proxy_url_2 = ""
   arc_no_proxy_2        = []
 
-  custom_location_resource_group_2   = var.azure_local_resource_group_name
-  logical_network_resource_group_2   = var.azure_local_resource_group_name
-  image_resource_group_2             = var.azure_local_resource_group_name
-  storage_container_resource_group_2 = var.azure_local_resource_group_name
-
   normalized_subscription_id_2 = data.azapi_client_config.current.subscription_id
 
-  custom_location_id_2   = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.custom_location_resource_group_2}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location_name_2}"
-  logical_network_id_2   = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.logical_network_resource_group_2}/providers/Microsoft.AzureStackHCI/logicalNetworks/${local.logical_network_name_2}"
-  image_id_2             = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.image_resource_group_2}/providers/Microsoft.AzureStackHCI/${local.image_resource_type_2}/${local.image_name_2}"
+  custom_location_id_2   = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${var.azure_local_resource_group_name}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location_name_2}"
+  logical_network_id_2   = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${var.azure_local_resource_group_name}/providers/Microsoft.AzureStackHCI/logicalNetworks/${local.logical_network_name_2}"
+  image_id_2             = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${var.azure_local_resource_group_name}/providers/Microsoft.AzureStackHCI/${local.image_resource_type_2}/${local.image_name_2}"
 
   requested_storage_container_name_2 = try(trimspace(local.storage_container_name_2), "") != "" ? trimspace(local.storage_container_name_2) : null
   discovered_storage_containers_2    = try(data.azapi_resource_list.storage_containers_2.output.storage_containers, [])
@@ -45,11 +40,11 @@ locals {
   ])[0] : null
 
   effective_storage_container_name_2 = local.requested_storage_container_name_2 != null ? local.requested_storage_container_name_2 : local.auto_selected_storage_container_name_2
-  storage_container_id_2             = local.effective_storage_container_name_2 != null ? "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.storage_container_resource_group_2}/providers/Microsoft.AzureStackHCI/storageContainers/${local.effective_storage_container_name_2}" : null
+  storage_container_id_2             = local.effective_storage_container_name_2 != null ? "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${var.azure_local_resource_group_name}/providers/Microsoft.AzureStackHCI/storageContainers/${local.effective_storage_container_name_2}" : null
 
   storage_selection_valid_2 = local.effective_storage_container_name_2 != null
 
-  storage_selection_message_2 = "No storage containers were discovered for custom location ${local.custom_location_id_2} in resource group ${local.storage_container_resource_group_2}. Set storage_container_name_2 explicitly or verify storage containers for this custom location."
+  storage_selection_message_2 = "No storage containers were discovered for custom location ${local.custom_location_id_2} in resource group ${var.azure_local_resource_group_name}. Set storage_container_name_2 explicitly or verify storage containers for this custom location."
 
   vm_tags_2 = merge(
     {
@@ -115,7 +110,7 @@ locals {
 
 data "azapi_resource_list" "storage_containers_2" {
   type      = "Microsoft.AzureStackHCI/storageContainers@2024-01-01"
-  parent_id = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.storage_container_resource_group_2}"
+  parent_id = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${var.azure_local_resource_group_name}"
 
   response_export_values = {
     storage_containers = "value[].{name:name,id:id,extendedLocationName:extendedLocation.name}"
@@ -181,7 +176,7 @@ resource "azapi_resource" "azure_local_data_disks_2" {
     properties = {
       containerId      = local.storage_container_id_2
       diskSizeGB       = each.value
-      dynamic          = true
+      dynamic          = false
       hyperVGeneration = "V2"
     }
   }
@@ -247,17 +242,17 @@ resource "azapi_resource" "azure_local_virtual_machine_2" {
   }
 }
 
-output "azure_local_vm_id_2" {
-  description = "Resource ID of the created Azure Local VM instance."
-  value       = azapi_resource.azure_local_virtual_machine_2.id
-}
+# output "azure_local_vm_id_2" {
+#   description = "Resource ID of the created Azure Local VM instance."
+#   value       = azapi_resource.azure_local_virtual_machine_2.id
+# }
 
-output "azure_local_vm_nic_id_2" {
-  description = "Resource ID of the created Azure Local NIC."
-  value       = azapi_resource.azure_local_nic_2.id
-}
+# output "azure_local_vm_nic_id_2" {
+#   description = "Resource ID of the created Azure Local NIC."
+#   value       = azapi_resource.azure_local_nic_2.id
+# }
 
-output "azure_local_vm_data_disk_id_2" {
-  description = "Resource IDs of optional Azure Local data disks keyed by volume name."
-  value       = { for volume_name, disk in azapi_resource.azure_local_data_disks_2 : volume_name => disk.id }
-}
+# output "azure_local_vm_data_disk_id_2" {
+#   description = "Resource IDs of optional Azure Local data disks keyed by volume name."
+#   value       = { for volume_name, disk in azapi_resource.azure_local_data_disks_2 : volume_name => disk.id }
+# }
