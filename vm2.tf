@@ -29,7 +29,25 @@ locals {
   custom_location_id_2   = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.custom_location_resource_group_2}/providers/Microsoft.ExtendedLocation/customLocations/${local.custom_location_name_2}"
   logical_network_id_2   = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.logical_network_resource_group_2}/providers/Microsoft.AzureStackHCI/logicalNetworks/${local.logical_network_name_2}"
   image_id_2             = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.image_resource_group_2}/providers/Microsoft.AzureStackHCI/${local.image_resource_type_2}/${local.image_name_2}"
-  storage_container_id_2 = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.storage_container_resource_group_2}/providers/Microsoft.AzureStackHCI/storageContainers/${local.storage_container_name_2}"
+
+  requested_storage_container_name_2 = try(trimspace(local.storage_container_name_2), "") != "" ? trimspace(local.storage_container_name_2) : null
+  discovered_storage_containers_2    = try(data.azapi_resource_list.storage_containers_2.output.storage_containers, [])
+
+  discovered_storage_containers_for_scope_2 = [
+    for storage_container in local.discovered_storage_containers_2 : storage_container
+    if lower(try(storage_container.extendedLocationName, "")) == lower(local.custom_location_id_2)
+  ]
+
+  auto_selected_storage_container_name_2 = length(local.discovered_storage_containers_for_scope_2) > 0 ? sort([
+    for storage_container in local.discovered_storage_containers_for_scope_2 : storage_container.name
+  ])[0] : null
+
+  effective_storage_container_name_2 = local.requested_storage_container_name_2 != null ? local.requested_storage_container_name_2 : local.auto_selected_storage_container_name_2
+  storage_container_id_2             = local.effective_storage_container_name_2 != null ? "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.storage_container_resource_group_2}/providers/Microsoft.AzureStackHCI/storageContainers/${local.effective_storage_container_name_2}" : null
+
+  storage_selection_valid_2 = local.effective_storage_container_name_2 != null
+
+  storage_selection_message_2 = "No storage containers were discovered for custom location ${local.custom_location_id_2} in resource group ${local.storage_container_resource_group_2}. Set storage_container_name_2 explicitly or verify storage containers for this custom location."
 
   vm_tags_2 = merge(
     {
@@ -82,6 +100,15 @@ locals {
   )
 }
 
+data "azapi_resource_list" "storage_containers_2" {
+  type      = "Microsoft.AzureStackHCI/storageContainers@2024-01-01"
+  parent_id = "/subscriptions/${local.normalized_subscription_id_2}/resourceGroups/${local.storage_container_resource_group_2}"
+
+  response_export_values = {
+    storage_containers = "value[].{name:name,id:id,extendedLocationName:extendedLocation.name}"
+  }
+}
+
 resource "azapi_resource" "arc_machine_2" {
   type      = "Microsoft.HybridCompute/machines@2024-07-10"
   name      = local.vm_name_2
@@ -126,6 +153,13 @@ resource "azapi_resource" "azure_local_data_disk_2" {
   schema_validation_enabled = false
   tags                      = local.vm_tags_2
 
+  lifecycle {
+    precondition {
+      condition     = local.storage_selection_valid_2
+      error_message = local.storage_selection_message_2
+    }
+  }
+
   body = {
     extendedLocation = {
       type = "CustomLocation"
@@ -145,6 +179,13 @@ resource "azapi_resource" "azure_local_virtual_machine_2" {
   name                      = "default"
   parent_id                 = azapi_resource.arc_machine_2.id
   schema_validation_enabled = false
+
+  lifecycle {
+    precondition {
+      condition     = local.storage_selection_valid_2
+      error_message = local.storage_selection_message_2
+    }
+  }
 
   body = {
     extendedLocation = {
