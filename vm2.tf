@@ -14,6 +14,10 @@ locals {
   data_volume_size_gb_2 = 0
   static_ip_address_2   = ""
   windows_time_zone_2   = "Eastern Standard Time"
+  # Optional proxy examples: http://proxy.company.local:8080, https://proxy.company.local:8443, ["127.0.0.1", ".company.local", "10.0.0.0/8"]
+  arc_http_proxy_url_2  = ""
+  arc_https_proxy_url_2 = ""
+  arc_no_proxy_2        = []
 
   custom_location_resource_group_2   = var.azure_local_resource_group_name
   logical_network_resource_group_2   = var.azure_local_resource_group_name
@@ -51,6 +55,10 @@ locals {
     provisionVMConfigAgent = true
     timeZone               = local.windows_time_zone_2
   }
+
+  normalized_arc_http_proxy_url_2  = try(trimspace(local.arc_http_proxy_url_2), "") != "" ? trimspace(local.arc_http_proxy_url_2) : null
+  normalized_arc_https_proxy_url_2 = try(trimspace(local.arc_https_proxy_url_2), "") != "" ? trimspace(local.arc_https_proxy_url_2) : null
+  include_http_proxy_config_2      = local.normalized_arc_http_proxy_url_2 != null || local.normalized_arc_https_proxy_url_2 != null || length(local.arc_no_proxy_2) > 0
 
   create_data_volume_2 = local.data_volume_size_gb_2 > 0
 
@@ -143,7 +151,7 @@ resource "azapi_resource" "azure_local_virtual_machine_2" {
       type = "CustomLocation"
       name = local.custom_location_id_2
     }
-    properties = {
+    properties = merge({
       hardwareProfile = {
         vmSize     = "Custom"
         processors = local.cpu_count_2
@@ -169,7 +177,19 @@ resource "azapi_resource" "azure_local_virtual_machine_2" {
           secureBootEnabled = true
         }
       }
-    }
+    }, local.include_http_proxy_config_2 ? {
+      httpProxyConfig = merge(
+        local.normalized_arc_http_proxy_url_2 != null ? {
+          httpProxy = local.normalized_arc_http_proxy_url_2
+        } : {},
+        local.normalized_arc_https_proxy_url_2 != null ? {
+          httpsProxy = local.normalized_arc_https_proxy_url_2
+        } : {},
+        length(local.arc_no_proxy_2) > 0 ? {
+          noProxy = local.arc_no_proxy_2
+        } : {}
+      )
+    } : {})
   }
 }
 
