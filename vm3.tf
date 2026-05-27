@@ -21,6 +21,11 @@ locals {
   arc_http_proxy_url_3  = ""
   arc_https_proxy_url_3 = ""
   arc_no_proxy_3        = []
+
+  additional_tags_3 = {
+    # environment = "dev"
+    # owner       = "team3"
+  }
 }
 
 module "azure_local_vm_3" {
@@ -51,6 +56,6 @@ module "azure_local_vm_3" {
   arc_https_proxy_url = local.arc_https_proxy_url_3
   arc_no_proxy        = local.arc_no_proxy_3
 
-  additional_tags = var.additional_tags
+  additional_tags = merge(var.additional_tags, local.additional_tags_3)
   subscription_id = var.subscription_id
 }
