@@ -1,0 +1,43 @@
+azure_local_resource_group_name = "my-rg"
+location                        = "eastus"
+
+custom_location_name = "my-custom-location"
+logical_network_name = "my-logical-network"
+image_name           = "my-image"
+
+admin_username = "localadmin"
+admin_password = "replace-me"
+
+additional_tags = {
+  workload = "azure-local"
+  managed  = "terraform"
+}
+
+compute_nodes = {
+  "win-app-01" = {
+    private_ip          = "192.168.10.67"
+    processors          = 4
+    memory_mb           = 8192
+    data_disk_1_size_gb = 0
+    data_disk_2_size_gb = 0
+    data_disk_3_size_gb = 0
+    tags = {
+      role               = "app"
+      notes              = "Primary application node"
+      service_now_ticket = "CHG0000001"
+    }
+  }
+  "win-app-02" = {
+    private_ip          = "10.0.20.12"
+    processors          = 4
+    memory_mb           = 8192
+    data_disk_1_size_gb = 0
+    data_disk_2_size_gb = 0
+    data_disk_3_size_gb = 0
+    tags = {
+      role               = "app"
+      notes              = "Secondary application node"
+      service_now_ticket = "CHG0000001"
+    }
+  }
+}
