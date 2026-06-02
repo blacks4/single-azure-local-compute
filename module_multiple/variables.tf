@@ -13,6 +13,11 @@ variable "vm_name" {
   type        = string
 }
 
+variable "ad_domain" {
+  description = "Active Directory domain associated with this VM."
+  type        = string
+}
+
 variable "custom_location_name" {
   description = "Name of the Azure Local custom location."
   type        = string

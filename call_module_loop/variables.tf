@@ -86,6 +86,7 @@ variable "compute_nodes" {
   description = "VM definitions keyed by VM hostname."
   type = map(object({
     private_ip          = string
+    ad_domain           = string
     processors          = number
     memory_mb           = number
     data_disk_1_size_gb = number

@@ -22,3 +22,21 @@ output "effective_storage_container_name" {
   description = "Storage container selected for VM config and data disks."
   value       = local.effective_storage_container_name
 }
+
+output "vm_hostname" {
+  description = "Hostname provided for this VM module instance."
+  value       = var.vm_name
+}
+
+output "ad_domain" {
+  description = "AD domain provided for this VM module instance."
+  value       = var.ad_domain
+}
+
+output "vm_hostname_and_ad_domain" {
+  description = "Hostname and AD domain provided for this VM module instance."
+  value = {
+    hostname  = var.vm_name
+    ad_domain = var.ad_domain
+  }
+}

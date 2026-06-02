@@ -6,6 +6,7 @@ module "azure_local_vm" {
   location                        = var.location
 
   vm_name                = each.key
+  ad_domain              = each.value.ad_domain
   custom_location_name   = var.custom_location_name
   logical_network_name   = var.logical_network_name
   image_name             = var.image_name
