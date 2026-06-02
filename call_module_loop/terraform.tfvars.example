@@ -16,6 +16,7 @@ additional_tags = {
 compute_nodes = {
   "win-app-01" = {
     private_ip          = "192.168.10.67"
+    ad_domain = ""
     processors          = 4
     memory_mb           = 8192
     data_disk_1_size_gb = 0
@@ -29,6 +30,7 @@ compute_nodes = {
   }
   "win-app-02" = {
     private_ip          = "10.0.20.12"
+    ad_domain = ""
     processors          = 4
     memory_mb           = 8192
     data_disk_1_size_gb = 0
