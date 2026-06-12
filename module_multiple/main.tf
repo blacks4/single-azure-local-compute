@@ -214,9 +214,7 @@ resource "azapi_resource" "azure_local_virtual_machine" {
           secureBootEnabled = true
         }
       }
-      }, var.activate_windows_server_azure_benefits ? {
-      licenseType = "Windows_Server"
-      } : {}, local.include_http_proxy_config ? {
+      }, local.include_http_proxy_config ? {
       httpProxyConfig = merge(
         local.normalized_arc_http_proxy_url != null ? {
           httpProxy = local.normalized_arc_http_proxy_url
