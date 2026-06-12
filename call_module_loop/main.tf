@@ -16,13 +16,14 @@ module "azure_local_vm" {
   admin_username = var.admin_username
   admin_password = var.admin_password
 
-  cpu_count            = each.value.processors
-  memory_mb            = each.value.memory_mb
-  data_volume1_size_gb = each.value.data_disk_1_size_gb
-  data_volume2_size_gb = each.value.data_disk_2_size_gb
-  data_volume3_size_gb = each.value.data_disk_3_size_gb
-  static_ip_address    = each.value.private_ip
-  windows_time_zone    = var.windows_time_zone
+  cpu_count                              = each.value.processors
+  memory_mb                              = each.value.memory_mb
+  data_volume1_size_gb                   = each.value.data_disk_1_size_gb
+  data_volume2_size_gb                   = each.value.data_disk_2_size_gb
+  data_volume3_size_gb                   = each.value.data_disk_3_size_gb
+  static_ip_address                      = each.value.private_ip
+  windows_time_zone                      = var.windows_time_zone
+  activate_windows_server_azure_benefits = var.activate_windows_server_azure_benefits
 
   arc_http_proxy_url  = var.arc_http_proxy_url
   arc_https_proxy_url = var.arc_https_proxy_url

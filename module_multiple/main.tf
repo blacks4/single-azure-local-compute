@@ -64,9 +64,9 @@ locals {
   include_http_proxy_config      = local.normalized_arc_http_proxy_url != null || local.normalized_arc_https_proxy_url != null || length(var.arc_no_proxy) > 0
 
   data_volume_sizes_gb = {
-    data_volume1 = var.data_volume1_size_gb
-    data_volume2 = var.data_volume2_size_gb
-    data_volume3 = var.data_volume3_size_gb
+    data  = var.data_volume1_size_gb
+    data2 = var.data_volume2_size_gb
+    data3 = var.data_volume3_size_gb
   }
 
   enabled_data_volumes = {
@@ -143,7 +143,7 @@ resource "azapi_resource" "azure_local_nic" {
 resource "azapi_resource" "azure_local_data_disks" {
   for_each                  = local.enabled_data_volumes
   type                      = "Microsoft.AzureStackHCI/virtualHardDisks@2024-01-01"
-  name                      = "${var.vm_name}-${replace(each.key, "_", "-")}"
+  name                      = "${var.vm_name}-${each.key}"
   parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment.id
   location                  = var.location
   schema_validation_enabled = false
@@ -214,7 +214,9 @@ resource "azapi_resource" "azure_local_virtual_machine" {
           secureBootEnabled = true
         }
       }
-      }, local.include_http_proxy_config ? {
+      }, var.activate_windows_server_azure_benefits ? {
+      licenseType = "Windows_Server"
+      } : {}, local.include_http_proxy_config ? {
       httpProxyConfig = merge(
         local.normalized_arc_http_proxy_url != null ? {
           httpProxy = local.normalized_arc_http_proxy_url

@@ -104,6 +104,12 @@ variable "windows_time_zone" {
   default     = "Eastern Standard Time"
 }
 
+variable "activate_windows_server_azure_benefits" {
+  description = "Enable Azure Benefits for Windows Server (Azure Hybrid Benefit) on Azure Local VMs."
+  type        = bool
+  default     = true
+}
+
 variable "arc_http_proxy_url" {
   description = "Optional HTTP proxy URL for Arc guest connectivity."
   type        = string

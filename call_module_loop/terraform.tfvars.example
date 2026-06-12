@@ -9,7 +9,7 @@ admin_username = "localadmin"
 admin_password = "replace-me"
 
 additional_tags = {
-  workload = "azure-local"
+  Environment = "prod"
   managed  = "terraform"
 }
 
@@ -22,11 +22,7 @@ compute_nodes = {
     data_disk_1_size_gb = 0
     data_disk_2_size_gb = 0
     data_disk_3_size_gb = 0
-    tags = {
-      role               = "app"
-      notes              = "Primary application node"
-      service_now_ticket = "CHG0000001"
-    }
+    tags = {}
   }
   "win-app-02" = {
     private_ip          = "10.0.20.12"
@@ -37,9 +33,8 @@ compute_nodes = {
     data_disk_2_size_gb = 0
     data_disk_3_size_gb = 0
     tags = {
-      role               = "app"
-      notes              = "Secondary application node"
-      service_now_ticket = "CHG0000001"
+      tag1               = "value1"
+      tag2              = "value 2"
     }
   }
 }
