@@ -31,10 +31,7 @@ locals {
   storage_selection_message = "No storage containers were discovered for custom location ${local.custom_location_id} in resource group ${var.azure_local_resource_group_name}. Set storage_container_name explicitly or verify storage containers for this custom location."
 
   vm_tags = merge(
-    {
-      managed_by = "terraform"
-      workload   = "azure-local-vm"
-    },
+    {},
     var.additional_tags
   )
 
