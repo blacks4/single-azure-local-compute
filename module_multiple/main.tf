@@ -115,6 +115,13 @@ resource "azapi_resource" "arc_machine" {
 
   body = {
     kind = "HCI"
+    properties = var.enable_azure_benefits ? {
+      licenseProfile = {
+        softwareAssurance = {
+          softwareAssuranceCustomer = true
+        }
+      }
+    } : {}
   }
 }
 
