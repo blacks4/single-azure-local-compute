@@ -133,13 +133,9 @@ resource "azapi_resource" "arc_machine_license_profile" {
 
   body = {
     properties = {
-      softwareAssurance = {
-        softwareAssuranceCustomer = true
-      }
       productProfile = {
         subscriptionStatus = "Enabled"
         productType        = "WindowsServer"
-        billingEndDate     = null
       }
     }
   }
