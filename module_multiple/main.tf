@@ -103,12 +103,11 @@ data "azapi_resource_list" "storage_containers" {
 }
 
 resource "azapi_resource" "arc_machine" {
-  type                      = "Microsoft.HybridCompute/machines@2024-07-10"
-  name                      = var.vm_name
-  parent_id                 = data.azurerm_resource_group.azure_local_vm_deployment.id
-  location                  = var.location
-  tags                      = local.vm_tags
-  schema_validation_enabled = false
+  type      = "Microsoft.HybridCompute/machines@2024-07-10"
+  name      = var.vm_name
+  parent_id = data.azurerm_resource_group.azure_local_vm_deployment.id
+  location  = var.location
+  tags      = local.vm_tags
 
   identity {
     type = "SystemAssigned"
@@ -116,28 +115,6 @@ resource "azapi_resource" "arc_machine" {
 
   body = {
     kind = "HCI"
-  }
-}
-
-# Assigns the Windows Server license profile to the Arc machine.
-# This is what moves License Status from "Unlicensed" → "Licensed" and
-# License Type from "KMS Client" → "Automatic VM Activation", which is
-# the prerequisite for "Activate Azure Benefits" being clickable in the portal.
-resource "azapi_resource" "arc_machine_license_profile" {
-  count                     = var.enable_azure_benefits ? 1 : 0
-  type                      = "Microsoft.HybridCompute/machines/licenseProfiles@2024-07-10"
-  name                      = "default"
-  parent_id                 = azapi_resource.arc_machine.id
-  location                  = var.location
-  schema_validation_enabled = false
-
-  body = {
-    properties = {
-      productProfile = {
-        subscriptionStatus = "Enabled"
-        productType        = "WindowsServer"
-      }
-    }
   }
 }
 

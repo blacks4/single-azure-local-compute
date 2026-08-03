@@ -122,12 +122,6 @@ variable "arc_no_proxy" {
   default     = []
 }
 
-variable "enable_azure_benefits" {
-  description = "When true, sets softwareAssuranceCustomer = true on the Arc machine, changing the Windows Server license type from 'KMS Client' to 'Automatic VM Activation' and enabling 'Activate Azure Benefits'. Requires valid Software Assurance or active Windows Server subscription licenses."
-  type        = bool
-  default     = true
-}
-
 variable "additional_tags" {
   description = "Additional tags to apply to created resources."
   type        = map(string)
