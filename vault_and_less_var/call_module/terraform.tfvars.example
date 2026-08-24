@@ -1,0 +1,52 @@
+global_settings = {
+  azure_local_resource_group_name = "my-rg"
+  location                        = "eastus"
+  subscription_id                 = "00000000-0000-0000-0000-000000000000"
+  site_type                       = "battery"
+
+  custom_location_name = "my-custom-location"
+  logical_network_name = "my-logical-network"
+  image_name           = "my-image"
+
+  additional_tags = {
+    Environment = "prod"
+    managed     = "terraform"
+  }
+}
+
+vault_settings = {
+  address            = "https://vault.example.com:8200"
+  namespace          = "admin"
+  kv2_mount          = "kv"
+  kv2_secret_path    = "azure-local/vm-admin"
+  admin_username_key  = "admin_username"
+  admin_password_key  = "admin_password"
+}
+
+global_extensions = {}
+
+compute_nodes = {
+  "win-app-01" = {
+    private_ip          = "192.168.10.67"
+    ad_domain           = ""
+    processors          = 4
+    memory_mb           = 8192
+    data_disk_1_size_gb = 0
+    data_disk_2_size_gb = 0
+    data_disk_3_size_gb = 0
+    tags                = {}
+  }
+  "win-app-02" = {
+    private_ip          = "10.0.20.12"
+    ad_domain           = ""
+    processors          = 4
+    memory_mb           = 8192
+    data_disk_1_size_gb = 0
+    data_disk_2_size_gb = 0
+    data_disk_3_size_gb = 0
+    tags = {
+      tag1 = "value1"
+      tag2 = "value 2"
+    }
+  }
+}
