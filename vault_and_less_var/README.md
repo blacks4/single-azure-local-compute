@@ -116,6 +116,35 @@ dynamic = false
 
 That created fixed-size disks.
 
+## Large Batch Deployments
+
+Azure Local VM creation can fail intermittently when many VMs are created at the same time. The failure can surface from the AzureStackHCI operation status with a MOC operator message such as:
+
+```text
+Error creating the tag file ... The supplied user buffer is not valid for the requested operation.
+```
+
+This is usually a backend concurrency problem in the Azure Local cluster or storage path, not a Terraform configuration dependency issue.
+
+Terraform processes independent graph nodes concurrently. The default Terraform parallelism is `10`, which can be too high for large Azure Local VM batches because each VM creates several Azure Local resources.
+
+Recommended HCP Terraform workspace setting:
+
+```text
+TFE_PARALLELISM = 1
+```
+
+If using HCP Terraform agents or local CLI runs, set command-specific CLI arguments instead:
+
+```sh
+export TF_CLI_ARGS_plan="-parallelism=1"
+export TF_CLI_ARGS_apply="-parallelism=1"
+```
+
+For faster deployments, test cautiously with `2` or `3`, but use `1` if the Azure Local backend continues to fail during bulk VM creation.
+
+If a run partially succeeds and then fails, rerun `terraform apply` after lowering parallelism. Terraform should keep the successfully created resources in state and continue with the remaining planned resources. If Azure contains failed partial resources that are not in state, clean those up or import them before rerunning.
+
 ## Validation
 
 The updated Terraform configuration was formatted and validated from `call_module/`:
